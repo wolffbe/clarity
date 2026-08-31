@@ -61,7 +61,7 @@ class LauncherActivity : AppCompatActivity() {
     private fun loadApps() {
         val pm = packageManager
         entries.clear()
-        Whitelist.kioskSet(packageName).forEach { pkg ->
+        Whitelist.kioskSet(this).forEach { pkg ->
             val launch = pm.getLaunchIntentForPackage(pkg) ?: return@forEach
             val ai = try { pm.getApplicationInfo(pkg, 0) } catch (_: Exception) { return@forEach }
             entries.add(Entry(pm.getApplicationLabel(ai), pm.getApplicationIcon(ai), launch))

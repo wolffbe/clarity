@@ -1,29 +1,45 @@
 package dev.clarity
 
+import android.content.Context
+
 /**
- * Whitelist model. Everything NOT named here gets hidden.
+ * Whitelist model. Everything NOT allowed gets hidden.
  *
- * APPS is your allow list: the only non system apps that stay visible and
- * usable. They keep full internet access, so in app auth and OAuth web views
- * work normally. Edit this to match the phone.
+ * Your personal app list (APPS) is deliberately NOT in this file and NOT in the
+ * repo. It is loaded at runtime from assets/whitelist.txt, which is gitignored,
+ * so your actual apps (banking, health, finance) never get published. See
+ * whitelist.example.txt for the format.
  *
- * SYSTEM_ESSENTIALS keeps the phone a phone: dialer, settings, clock, the
- * system launcher fallback, etc. These are matched across common OEM package
- * names; harmless entries for a brand you do not have are simply ignored.
- * Trim this if you want an even tighter device.
+ * The reliable way to fill it is from your own device, which lists exactly the
+ * apps you installed:
+ *
+ *   adb shell pm list packages -3 | sed "s/package://" > app/src/main/assets/whitelist.txt
+ *
+ * SYSTEM_ESSENTIALS and KIOSK_ESSENTIALS are generic OS packages, not personal,
+ * so they stay here in the committed code.
  */
 object Whitelist {
 
-    /** The apps the user is allowed to keep. Customize freely. */
-    val APPS = setOf(
-        "com.spotify.music",              // music (video blocked at the network layer)
-        "com.google.android.apps.maps",   // maps
-        "com.whatsapp",                   // messaging
-        "com.google.android.gm",          // mail (auth via in app web view)
-        "com.azure.authenticator",        // 2FA
-        "com.google.android.apps.authenticator2",
-        "com.microsoft.office.outlook",
-    )
+    private const val ASSET = "whitelist.txt"
+
+    @Volatile
+    private var cached: Set<String>? = null
+
+    /** Allowed apps, loaded from the gitignored asset. Empty set if absent. */
+    fun apps(context: Context): Set<String> {
+        cached?.let { return it }
+        val set = try {
+            context.assets.open(ASSET).bufferedReader().useLines { lines ->
+                lines.map { it.substringBefore('#').trim() }
+                    .filter { it.isNotEmpty() }
+                    .toSet()
+            }
+        } catch (e: Exception) {
+            emptySet()
+        }
+        cached = set
+        return set
+    }
 
     /**
      * System packages that must stay to keep the device functional.
@@ -47,7 +63,7 @@ object Whitelist {
         // camera
         "com.android.camera2", "com.google.android.GoogleCamera",
         "com.sec.android.app.camera",
-        // dialer/emergency, system UI, installer, permission controller
+        // system UI, installer, permission controller
         "com.android.systemui", "com.android.packageinstaller",
         "com.google.android.packageinstaller",
         "com.android.permissioncontroller",
@@ -63,14 +79,9 @@ object Whitelist {
     )
 
     /**
-     * The ONLY packages allowed to run in the kiosk (lock task) and to appear
-     * on the home grid. Deliberately narrower than SYSTEM_ESSENTIALS: it leaves
-     * out Settings, the Play Store, the package installer, and the file picker,
-     * so those stay installed and working in the background but cannot be
-     * launched or deep linked into while the phone is locked. That closes the
-     * "app links me into Settings" and "Play Store is a browser" escapes.
-     *
-     * Only genuinely user facing utilities live here.
+     * User facing utility system apps allowed to run in the kiosk and show on
+     * the home grid. Narrower than SYSTEM_ESSENTIALS: no Settings, Play Store,
+     * installer, or file picker.
      */
     val KIOSK_ESSENTIALS = setOf(
         // phone / dialer
@@ -91,10 +102,10 @@ object Whitelist {
     )
 
     /** Packages that must never be hidden (kept installed and functional). */
-    fun protectedSet(ownPackage: String): Set<String> =
-        APPS + SYSTEM_ESSENTIALS + ownPackage
+    fun protectedSet(context: Context): Set<String> =
+        apps(context) + SYSTEM_ESSENTIALS + context.packageName
 
     /** Packages allowed to run in the kiosk and shown on the launcher grid. */
-    fun kioskSet(ownPackage: String): Set<String> =
-        APPS + KIOSK_ESSENTIALS + ownPackage
+    fun kioskSet(context: Context): Set<String> =
+        apps(context) + KIOSK_ESSENTIALS + context.packageName
 }

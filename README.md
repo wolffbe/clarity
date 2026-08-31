@@ -127,10 +127,19 @@ Need: a computer with adb, and a phone you can factory reset.
 
 ## Tuning
 
-* **Allowed apps:** edit `Whitelist.APPS` (what you allow) and
-  `Whitelist.KIOSK_ESSENTIALS` (the utility apps that may run and show on the
-  grid while locked). `SYSTEM_ESSENTIALS` is the broader "keep installed but not
-  necessarily reachable" set.
+* **Allowed apps:** your personal allow list lives in
+  `app/src/main/assets/whitelist.txt` (one package per line), which is
+  **gitignored** so your real apps never get committed. Copy
+  `whitelist.example.txt` to `whitelist.txt`, or, better, generate it from your
+  device so the package names are exact:
+
+  ```
+  adb shell pm list packages -3 | sed "s/package://" > app/src/main/assets/whitelist.txt
+  ```
+
+  Then delete any lines you do not want allowed. `KIOSK_ESSENTIALS` (utility
+  system apps on the grid) and `SYSTEM_ESSENTIALS` (kept installed) stay in
+  `Whitelist.kt`, since they are generic OS packages, not personal.
 * **Connectivity: cellular only, no wifi.** WiFi is blocked outright
   (`DISALLOW_CONFIG_WIFI`, `DISALLOW_CHANGE_WIFI_STATE`,
   `DISALLOW_ADD_WIFI_CONFIG`): it cannot be turned on or configured on the

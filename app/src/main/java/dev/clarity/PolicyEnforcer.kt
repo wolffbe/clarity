@@ -54,7 +54,7 @@ object PolicyEnforcer {
         ensureMobileData(context)
         grantSelfBluetooth(context)
 
-        val protectedSet = Whitelist.protectedSet(context.packageName)
+        val protectedSet = Whitelist.protectedSet(context)
         val candidates = hideCandidates(context)
 
         val hidden = mutableListOf<String>()
@@ -316,7 +316,7 @@ object PolicyEnforcer {
         // grid, so there is no Settings icon to browse from, only the targeted
         // mobile control. Dangerous Settings actions stay blocked by the
         // hardening restrictions, and wifi is neutered.
-        val allowed = (Whitelist.kioskSet(context.packageName) + "com.android.settings").toTypedArray()
+        val allowed = (Whitelist.kioskSet(context) + "com.android.settings").toTypedArray()
         try { dpm.setLockTaskPackages(admin, allowed) } catch (_: Exception) {}
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
