@@ -146,8 +146,15 @@ object PolicyEnforcer {
         add(UserManager.DISALLOW_CONFIG_VPN)              // cannot disable our VPN
         add(UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA)    // no loading apks off SD
         add(UserManager.DISALLOW_USB_FILE_TRANSFER)       // no loading media over USB
+        add(UserManager.DISALLOW_CONFIG_WIFI)             // wifi blocked: no config
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             add(UserManager.DISALLOW_CONFIG_DATE_TIME)    // no clock fiddling
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            add(UserManager.DISALLOW_CHANGE_WIFI_STATE)   // wifi stays off
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(UserManager.DISALLOW_ADD_WIFI_CONFIG)     // no adding wifi networks
         }
     }
 
@@ -304,7 +311,12 @@ object PolicyEnforcer {
         val dpm = dpm(context)
         val admin = admin(context)
 
-        val allowed = Whitelist.kioskSet(context.packageName).toTypedArray()
+        // Settings is allowed to RUN in lock task (so the mobile data / SIM
+        // panel can open from the Clarity app) but it is not on the launcher
+        // grid, so there is no Settings icon to browse from, only the targeted
+        // mobile control. Dangerous Settings actions stay blocked by the
+        // hardening restrictions, and wifi is neutered.
+        val allowed = (Whitelist.kioskSet(context.packageName) + "com.android.settings").toTypedArray()
         try { dpm.setLockTaskPackages(admin, allowed) } catch (_: Exception) {}
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

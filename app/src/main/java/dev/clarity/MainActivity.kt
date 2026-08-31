@@ -2,8 +2,11 @@ package dev.clarity
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
 import android.net.VpnService
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -41,6 +44,10 @@ class MainActivity : AppCompatActivity() {
         }
         val bt = Button(this).apply { setOnClickListener { toggleBluetooth() } }
         btBtn = bt
+        val simBtn = Button(this).apply {
+            text = "Mobile data & SIM"
+            setOnClickListener { openMobileSettings() }
+        }
 
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -48,6 +55,7 @@ class MainActivity : AppCompatActivity() {
             addView(title)
             addView(status)
             addView(bt)
+            addView(simBtn)
             addView(enforceBtn)
         }
 
@@ -101,6 +109,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Opens the mobile data / SIM panel. Works because Settings is allowed to
+     *  run in lock task (but is kept off the home grid). */
+    private fun openMobileSettings() {
+        val panel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY)
+        } else {
+            Intent(Settings.ACTION_WIRELESS_SETTINGS)
+        }
+        try {
+            startActivity(panel)
+        } catch (_: Exception) {
+            try { startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) } catch (_: Exception) {}
+        }
+    }
+
     private fun maybeRequestVpnConsent() {
         val intent = VpnService.prepare(this) ?: return
         startActivityForResult(intent, REQ_VPN)
@@ -127,7 +150,9 @@ class MainActivity : AppCompatActivity() {
             append("Mode: whitelist (only allowed apps visible)\n")
             append("Home: Clarity launcher, recents removed (kiosk)\n")
             append("Status bar / shade / quick settings: disabled\n")
-            append("Settings & Play Store: not reachable while locked\n")
+            append("Play Store & general Settings: off the grid\n")
+            append("WiFi: blocked (cellular only)\n")
+            append("Bluetooth & mobile SIM: managed via buttons above\n")
             append("Accessibility & keyboards: third party barred\n")
             append("Lock screen camera & widgets: off\n")
             append("adb / USB debugging: disabled\n")

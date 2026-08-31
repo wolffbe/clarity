@@ -24,9 +24,11 @@ points:
 * The status bar, notification shade, and quick settings are disabled
   (`setStatusBarDisabled`), so there is no shade to pull down and no tile long
   press into Settings.
-* Only a curated kiosk set may run while locked. Settings, the Play Store, the
-  package installer, and the file picker are excluded, so an app cannot deep
-  link you into them. They stay installed and working in the background.
+* Only a curated kiosk set may run while locked. The Play Store, the package
+  installer, and the file picker are excluded. Settings is allowed to run (so
+  the Clarity app can open the mobile data / SIM panel) but is kept off the
+  launcher grid, so there is no Settings icon to browse from; dangerous Settings
+  actions stay blocked by the hardening restrictions.
 * The lock screen camera shortcut and widgets are disabled.
 * Third-party accessibility services (which is how Voice Access would let you
   talk your way around the UI) and third-party keyboards are barred; system
@@ -129,20 +131,24 @@ Need: a computer with adb, and a phone you can factory reset.
   `Whitelist.KIOSK_ESSENTIALS` (the utility apps that may run and show on the
   grid while locked). `SYSTEM_ESSENTIALS` is the broader "keep installed but not
   necessarily reachable" set.
-* **Settings while locked:** Settings is intentionally NOT in the kiosk set, so
-  it cannot be opened while the phone is locked. Set up wifi and anything else
-  you need before you lock down. If you must reach a Settings screen on the
-  device, add `com.android.settings` to `KIOSK_ESSENTIALS`, at the cost of
-  reopening the "deep link into Settings" surface.
-* **Connectivity (mobile data):** the phone is meant to run on a SIM, not wifi.
-  Clarity keeps mobile data on by default. There is no reliable device owner API
-  to flip the master data switch (it needs a system permission), so the code
-  makes a best effort attempt, but the real guarantee is structural: a freshly
-  reset phone with a data SIM starts with data on, and the lockdown removes every
-  way to turn it off (no Settings, no quick settings), so it stays on across
-  reboots. Insert an activated SIM and confirm data works before you lock down.
-  Data roaming stays at the device default; set `FORCE_DATA_ROAMING` in
-  `PolicyEnforcer.kt` to force it on if you travel.
+* **Connectivity: cellular only, no wifi.** WiFi is blocked outright
+  (`DISALLOW_CONFIG_WIFI`, `DISALLOW_CHANGE_WIFI_STATE`,
+  `DISALLOW_ADD_WIFI_CONFIG`): it cannot be turned on or configured on the
+  device, so the phone runs on the SIM. Turn wifi off before you lock down, and
+  the restrictions keep it off. The always on filtering VPN runs over cellular.
+* **Managing Bluetooth and the SIM on device.** The Clarity app (its icon is on
+  the home grid) has a **Bluetooth** toggle and a **Mobile data & SIM** button.
+  Bluetooth toggles directly (a device owner is exempt from the Android 13 rule
+  that stops apps toggling it). The SIM button opens the system mobile data /
+  internet panel; to allow that, `com.android.settings` is permitted to RUN in
+  lock task but is kept OFF the launcher grid, so there is no Settings icon to
+  browse, only the targeted mobile control. Every dangerous Settings action
+  (factory reset, developer options, adding a user, VPN config, date/time) stays
+  blocked by the hardening restrictions, and the wifi controls there are
+  neutered. Clarity also makes a best effort to keep mobile data on; there is no
+  guaranteed device owner API for the master data switch, but you can now turn it
+  back on yourself from the SIM button if it ever gets switched off. Set
+  `FORCE_DATA_ROAMING` in `PolicyEnforcer.kt` to force roaming on if you travel.
 * **Video hosts:** enable logcat and watch tag `ClarityDNS` to see exactly what
   Spotify (or anything) resolves on your device, then move video hosts into
   `DomainRules.BLOCKED_SUFFIXES`. Audio hosts left out of that set keep working.
