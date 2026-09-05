@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Clarity: web content filter profile (RECOMMENDED).
+
+  Closes the classic kiosk escape: web pages rendering inside whitelisted
+  apps. The OS built in content filter applies to EVERY WebKit view system
+  wide, including SFSafariViewController and WKWebView embedded in third
+  party apps, and with AutoFilterEnabled off it consults nothing external,
+  it just matches URLs against the list below on the device.
+
+  Mode: allowlist only. With AllowListBookmarks present, every WebKit page
+  load not on the list is refused. The list carries just the identity
+  providers needed for OAuth logins. Add the login domains of YOUR apps
+  (the refused page an app shows tells you the domain to add). Common
+  ones: accounts.google.com, appleid.apple.com, login.microsoftonline.com,
+  login.live.com, auth.uber.com.
+
+  Caveats:
+  * Only WebKit is filtered. Native video in an app goes through the DNS
+    profile instead; the two layers are complementary.
+  * Captive portal login pages (hotel and airport wifi) are WebKit and
+    will be refused unless added.
+  * Expect a short tuning period while you collect login domains. If it
+    proves too strict, do not install this profile; the phone still has no
+    browser UI, but in app pages load.
+-->
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>FilterType</key>
+			<string>BuiltIn</string>
+			<key>AutoFilterEnabled</key>
+			<false/>
+			<key>AllowListBookmarks</key>
+			<array>
+				<dict>
+					<key>Title</key>
+					<string>Apple ID</string>
+					<key>URL</key>
+					<string>https://appleid.apple.com</string>
+				</dict>
+				<dict>
+					<key>Title</key>
+					<string>Google sign-in</string>
+					<key>URL</key>
+					<string>https://accounts.google.com</string>
+				</dict>
+				<dict>
+					<key>Title</key>
+					<string>Spotify login</string>
+					<key>URL</key>
+					<string>https://accounts.spotify.com</string>
+				</dict>
+			</array>
+			<key>PayloadDescription</key>
+			<string>Allowlist only web filtering for every WebKit view on the device.</string>
+			<key>PayloadDisplayName</key>
+			<string>Clarity Web Filter</string>
+			<key>PayloadIdentifier</key>
+			<string>dev.clarity.ios.webfilter.payload</string>
+			<key>PayloadType</key>
+			<string>com.apple.webcontent-filter</string>
+			<key>PayloadUUID</key>
+			<string>4A0E3355-894A-4060-B682-22A6D17B1B5E</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Refuses every in app web page except listed login domains.</string>
+	<key>PayloadDisplayName</key>
+	<string>Clarity Web Filter</string>
+	<key>PayloadIdentifier</key>
+	<string>dev.clarity.ios.webfilter</string>
+	<key>PayloadOrganization</key>
+	<string>Clarity</string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>1DD95899-12F9-4250-81DB-3D502F45AD2F</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Clarity: restrictions profile (TEMPLATE).
+
+  The core of Clarity: the app whitelist and the hardening. Every key is
+  enforced by the OS profile system on a SUPERVISED iPhone. On an
+  unsupervised phone most of these keys are silently ignored, so supervise
+  first (iMazing, see README.md).
+
+  PRIVACY: this tracked copy carries only example apps. Copy it to
+  clarity-restrictions.local.mobileconfig (gitignored), put your real app
+  list in the copy, install the copy.
+
+  PayloadRemovalDisallowed is true: once installed there is no on-phone way
+  to remove this profile. The only lift path is USB from the computer that
+  holds the supervision identity. Destroy or escrow that identity and the
+  profile is permanent until a full wipe.
+-->
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<!-- ============================================================
+			     App whitelist. Everything NOT listed here is hidden and
+			     cannot launch, web clips included. Find bundle IDs in
+			     iMazing (Apps view) or via
+			     itunes.apple.com/search?term=NAME&amp;entity=software
+			     ============================================================ -->
+			<key>allowListedAppBundleIDs</key>
+			<array>
+				<!-- Utility system apps. -->
+				<string>com.apple.mobilephone</string>       <!-- Phone -->
+				<string>com.apple.MobileSMS</string>         <!-- Messages (SMS/iMessage) -->
+				<string>com.apple.MobileAddressBook</string> <!-- Contacts -->
+				<string>com.apple.mobiletimer</string>       <!-- Clock / alarm -->
+				<string>com.apple.camera</string>            <!-- Camera -->
+				<string>com.apple.mobileslideshow</string>   <!-- Photos (the camera roll) -->
+				<!-- Settings cannot actually be hidden by the allowlist; iOS
+				     always keeps it reachable. Listed for honesty. Every
+				     dangerous pane in it is closed by the restrictions
+				     below; wifi, cellular and Bluetooth stay usable. -->
+				<string>com.apple.Preferences</string>
+				<!-- Personal apps, EXAMPLE ONLY. Replace with your real
+				     list in your .local copy. Deliberately absent, do not
+				     add: Safari (com.apple.mobilesafari), App Store
+				     (com.apple.AppStore), Shortcuts (com.apple.shortcuts,
+				     it can fetch and render web content), TV, News,
+				     Find My. -->
+				<string>com.spotify.client</string>          <!-- Spotify -->
+				<string>com.google.Gmail</string>            <!-- Gmail -->
+				<string>com.google.Maps</string>             <!-- Google Maps -->
+			</array>
+
+			<!-- ============================================================
+			     Hardening. All supervised keys, validated against Apple's
+			     published schema (github.com/apple/device-management).
+			     ============================================================ -->
+
+			<!-- Removes Erase All Content and Settings from the Settings
+			     app. The Security Lockout erase path still exists but
+			     demands the Apple ID password first, so escrowing the
+			     Apple ID closes it (see README). -->
+			<key>allowEraseContentAndSettings</key>
+			<false/>
+
+			<!-- Hides the App Store and blocks every install path:
+			     store, automatic downloads from other devices, App Clips
+			     launched from links or QR codes, and trusting sideloaded
+			     enterprise apps. -->
+			<key>allowAppInstallation</key>
+			<false/>
+			<key>allowUIAppInstallation</key>
+			<false/>
+			<key>allowAutomaticAppDownloads</key>
+			<false/>
+			<key>allowAppClips</key>
+			<false/>
+			<key>allowEnterpriseAppTrust</key>
+			<false/>
+
+			<!-- The whitelisted set cannot be removed or offloaded. -->
+			<key>allowAppRemoval</key>
+			<false/>
+
+			<!-- No browser. Belt and braces with the allowlist above. -->
+			<key>allowSafari</key>
+			<false/>
+
+			<!-- The Apple ID cannot be signed out or changed on the phone,
+			     so Find My and Activation Lock stay armed. This is what
+			     makes the post-wipe brick real. -->
+			<key>allowAccountModification</key>
+			<false/>
+
+			<!-- The phone refuses to pair with ANY computer except the one
+			     holding the supervision identity. A stranger PC gets
+			     nothing except the option to wipe via recovery mode. -->
+			<key>allowHostPairing</key>
+			<false/>
+
+			<!-- No VPN can be added to route around DNS filtering. -->
+			<key>allowVPNCreation</key>
+			<false/>
+
+			<!-- No installing rival profiles on the phone itself (for
+			     example a different DNS profile). Profiles then only
+			     arrive over USB from the supervision host. -->
+			<key>allowUIConfigurationProfileInstallation</key>
+			<false/>
+
+			<!-- Siri could surface web results and play media, so it
+			     goes. Spotlight web results likewise. allowAssistant is
+			     deprecated as of iOS 26.4 but still honored and has no
+			     replacement key; revisit if a future OS drops it. -->
+			<key>allowAssistant</key>
+			<false/>
+			<key>allowSpotlightInternetResults</key>
+			<false/>
+
+			<!-- No clock fiddling. -->
+			<key>forceAutomaticDateAndTime</key>
+			<true/>
+
+			<!-- No lock screen widget surface. -->
+			<key>allowLockScreenTodayView</key>
+			<false/>
+
+			<!-- THE DESIGN BET, made explicit. With iCloud Backup allowed,
+			     a wipe followed by a restore recovers nearly everything
+			     and the deterrent collapses to an evening of
+			     inconvenience. Disabling backup keeps the bet honest: the
+			     wipe really does cost every photo, message and login. The
+			     price is that a lost or broken phone costs the same.
+			     Delete this key from your .local copy if you want the
+			     softer wall. -->
+			<key>allowCloudBackup</key>
+			<false/>
+
+			<key>PayloadDescription</key>
+			<string>Clarity app whitelist and hardening. Supervised devices only.</string>
+			<key>PayloadDisplayName</key>
+			<string>Clarity Restrictions</string>
+			<key>PayloadIdentifier</key>
+			<string>dev.clarity.ios.restrictions.payload</string>
+			<key>PayloadType</key>
+			<string>com.apple.applicationaccess</string>
+			<key>PayloadUUID</key>
+			<string>D37CA4F6-E4A1-415C-9FEF-EDEE4C79871E</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Turns this iPhone into a locked down, distraction free device. Whitelist only, no browser, no installs, no on-phone off switch.</string>
+	<key>PayloadDisplayName</key>
+	<string>Clarity Restrictions</string>
+	<key>PayloadIdentifier</key>
+	<string>dev.clarity.ios.restrictions</string>
+	<key>PayloadOrganization</key>
+	<string>Clarity</string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>EBD511D5-2B9C-4A8A-AE80-80F6986A6A1B</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

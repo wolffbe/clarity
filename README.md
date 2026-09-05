@@ -1,201 +1,170 @@
 # Clarity
 
-Turns a stock Android phone into a locked down, distraction free device using
-the OS level **device owner** role, the same mechanism corporate device
-management uses. It runs a strict **whitelist**: only the apps you name stay
-usable, everything else disappears, there is no browser, and it is built to be
+Turns a stock iPhone into a locked down, distraction free device using
+**supervision**, the OS level management role that corporate device management
+uses. It runs a strict **whitelist**: only the apps you name stay visible,
+everything else disappears, there is no browser, and it is built to be
 genuinely hard to undo, not merely inconvenient.
+
+There is no code and no server. Clarity is three configuration profiles
+installed over USB from a PC running [iMazing](https://imazing.com/supervision)
+(Windows or Mac), enforced on the phone by the OS itself. Everything works in
+airplane mode; nothing phones home.
 
 ## What it enforces
 
-**Whitelist, not blocklist.** Only apps listed in
-`app/src/main/java/dev/clarity/Whitelist.kt` stay visible. Every other
-launchable or user installed app is hidden. Whitelisted apps keep full internet
-access, so their in app login and OAuth web views work normally. There is no
-standalone browser; stray `http`/`https` link taps hit a dead end screen.
+**Whitelist, not blocklist.** Only apps listed in the restrictions profile are
+shown or launchable. Safari, the App Store, Shortcuts, and every unlisted app
+disappear. Whitelisted apps keep full internet access, so their in app login
+and OAuth web views work normally. Tapped `http`/`https` links have nowhere to
+go and die quietly.
 
-**Custom launcher + hard kiosk.** Clarity replaces the home screen with its
-own launcher that shows only the allowed apps, pinned as the enforced default
-HOME so the stock launcher (also hidden) cannot take back over. Allowed apps run
-in Android lock task mode, and the kiosk is hardened to close the usual pry
-points:
+**Web content allowlist (optional but recommended).** The web filter profile
+uses the OS built in WebKit filter in allowlist only mode: every web page
+rendered anywhere on the device, including inside whitelisted apps' web views,
+is refused unless its domain is listed. Only login domains for OAuth need
+allowing. This closes the classic kiosk escape of browsing inside an allowed
+app.
 
-* Recents / multitasking is removed (no OVERVIEW lock task feature).
-* The status bar, notification shade, and quick settings are disabled
-  (`setStatusBarDisabled`), so there is no shade to pull down and no tile long
-  press into Settings.
-* Only a curated kiosk set may run while locked. The Play Store, the package
-  installer, and the file picker are excluded. Settings is allowed to run (so
-  the Clarity app can open the mobile data / SIM panel) but is kept off the
-  launcher grid, so there is no Settings icon to browse from; dangerous Settings
-  actions stay blocked by the hardening restrictions.
-* The lock screen camera shortcut and widgets are disabled.
-* Third-party accessibility services (which is how Voice Access would let you
-  talk your way around the UI) and third-party keyboards are barred; system
-  keyboards still work.
+**No on-phone off switch.** The profiles are marked non removable. Nothing on
+the device relaxes anything. The only ways out are listed under "Getting out",
+and every one of them destroys all data on the phone.
 
-The power menu and lockscreen stay active so you can still power off and unlock.
-
-**No on-phone off switch.** A release build has no button, menu, or setting on
-the device that relaxes any of this. The only way back is a full wipe done from
-a computer, which erases everything. See "Getting out" below.
-
-**Airtight hardening** (all applied automatically as device owner):
+**Hardening** (all supervised restriction keys, enforced by the OS):
 
 | Escape route | Closed by |
 | --- | --- |
-| adb / USB debugging | `DISALLOW_DEBUGGING_FEATURES` (this removes the adb path used to undo device owner) |
-| Safe mode | `DISALLOW_SAFE_BOOT` |
-| Installing anything | `DISALLOW_INSTALL_APPS` + unknown sources + no physical media |
-| Uninstalling / force stop / clear data | `DISALLOW_UNINSTALL_APPS`, `DISALLOW_APPS_CONTROL`, self uninstall blocked |
-| Factory reset from Settings | `DISALLOW_FACTORY_RESET` |
-| Second user / work profile escape | `DISALLOW_ADD_USER` |
-| Disabling the filter VPN | `DISALLOW_CONFIG_VPN` + always on VPN |
-| DoH DNS bypass | Known DoH resolver hosts blocked in the VPN; Private DNS (DoT) set off where the device allows it |
+| Remove the profiles in Settings | `PayloadRemovalDisallowed`; only the supervision host over USB can lift them |
+| Erase from Settings | `allowEraseContentAndSettings` |
+| Pair with another computer | `allowHostPairing`: the phone only pairs with the supervision host |
+| Install anything | `allowAppInstallation`, `allowUIAppInstallation`, `allowAutomaticAppDownloads`, `allowAppClips`, `allowEnterpriseAppTrust` |
+| Remove or offload apps | `allowAppRemoval` |
+| Sign out of the Apple ID (disarms Activation Lock) | `allowAccountModification` |
+| Add a VPN to dodge filtering | `allowVPNCreation` |
+| Install rival profiles on device | `allowUIConfigurationProfileInstallation` |
+| Talk or search your way to content (Siri, Spotlight web results) | `allowAssistant`, `allowSpotlightInternetResults` |
+| Clock fiddling | `forceAutomaticDateAndTime` |
+| Soften the wipe deterrent via iCloud Backup | `allowCloudBackup` (see "Getting out") |
 
-**Video blocked, music kept.** A built in filtering VPN (always on, pinned by
-device owner) inspects DNS and refuses to resolve video and streaming hosts,
-while leaving audio hosts alone. Spotify music plays; Spotify canvas/video
-clips, YouTube playback, and other video CDNs do not load. DoH resolvers are
-also blocked so apps cannot route around the filter. Rules live in
-`DomainRules.kt`.
+## What you need
 
-## Getting out: wipe from a computer, lose everything
-
-There is no delay, no passcode, and no on-phone off switch. The design bet is
-blunt: the only way out is to erase the whole phone, and that is painful enough
-to stop an impulse. Losing every photo, message, and app login is the
-deterrent.
-
-**The phone's own reset paths are closed:**
-
-* In-settings factory reset is blocked (`DISALLOW_FACTORY_RESET`).
-* Developer options, adb, and the OEM unlock toggle are disabled
-  (`DISALLOW_DEBUGGING_FEATURES`), so the bootloader stays locked and cannot be
-  unlocked from the device.
-* Safe boot is blocked, uninstall and force stop are blocked, and there is no
-  lift button in a release build.
-
-**So a reset requires a computer.** You put the phone into its manufacturer's
-flash/download mode (for example Odin on Samsung, EDL/Mi Flash on Xiaomi,
-fastboot where the bootloader is unlockable) and reflash or wipe from the
-laptop. That erases everything and is deliberate, cabled, and slow, exactly the
-friction you want. This is the sanctioned way to reconfigure or retire the
-device.
-
-**The one hole, stated honestly.** No app can disable stock recovery's
-hardware-key "wipe data/factory reset". A determined person who knows the key
-combo can still trigger it from the phone. Two things blunt it: it destroys all
-data just like the laptop path, and Android Factory Reset Protection then
-demands the Google account that was signed in, so it is not a clean or casual
-escape. If you ever want even that closed to *you*, the only way is to not hold
-the credential yourself: have someone else run setup with their Google account
-and put it in `FRP_ACCOUNTS` in `PolicyEnforcer.kt`. With your own account, FRP
-is standard anti theft, not a wall against the owner.
+* A PC with iMazing (supervision needs a paid license, one time) and a USB
+  cable.
+* An iPhone you can erase.
+* Optionally, a filtering DNS resolver (see "The DNS layer is optional").
 
 ## Setup
 
-Need: a computer with adb, and a phone you can factory reset.
+1. **Fill in your profiles.** Copy `clarity-restrictions.mobileconfig` to
+   `clarity-restrictions.local.mobileconfig` and put your real apps in the
+   allowlist (bundle IDs show in iMazing's Apps view, or search
+   `itunes.apple.com/search?term=NAME&entity=software`). The `*.local.*`
+   copies are gitignored, so your personal app list never gets committed. If
+   you use the DNS layer, copy and fill `clarity-dns.mobileconfig` the same
+   way.
+2. **Erase and supervise.** Factory reset the iPhone. Run iMazing's
+   Supervision wizard on the fresh device. iMazing generates a supervision
+   identity certificate; keep it for now, it is your only future write access.
+3. **Sign in and install.** Set up the phone, sign into the Apple ID, turn on
+   Find My (this arms Activation Lock), install every whitelisted app from the
+   App Store and log into each one while the store still exists.
+4. **Install the profiles** over USB from iMazing: restrictions, web filter,
+   and optionally DNS. They install silently on a supervised phone. The moment
+   the restrictions land, the App Store, Safari and every unlisted app vanish.
+5. **Live on it while you still hold the key.** The profiles cannot be removed
+   on the phone, but this PC can still lift them over USB. Tune the app list
+   and the web filter's login domains until the phone is right.
+6. **Commit.** Two credentials decide how hard the wall is:
+   * **Supervision identity.** Delete it from iMazing's library and from any
+     PC backups, and no computer on earth can pair with the phone or touch the
+     profiles again. Or export it to a USB stick held by someone you trust,
+     which is a lift path that does not cost your data.
+   * **Apple ID password.** Held by you, every wipe path stays open to you and
+     Activation Lock is mere anti theft. Held or co held by someone else, the
+     phone has zero phone-only wipe paths and even a wiped phone stays a brick
+     until they consent.
 
-1. **Factory reset the phone and skip account sign in** during setup. Device
-   owner can only be set when no accounts exist yet.
-2. Build and install (Android Studio, or `gradlew assembleDebug`):
+## The DNS layer is optional
 
-   ```
-   adb install app/build/outputs/apk/debug/app-debug.apk
-   ```
+Only one behavior needs it: blocking native video inside whitelisted apps
+while keeping their audio (for example streaming apps whose music you want but
+whose video you do not). Everything else is enforced on the phone with no
+external moving parts. Three postures:
 
-3. Activate device owner:
+* **None.** Skip the DNS profile. Native video inside whitelisted apps plays;
+  everything else still holds. For Spotify specifically, video can instead be
+  disabled at the account level: the Content and display settings carry
+  toggles for canvas, music videos and all video content (rolling out), and on
+  a family plan the plan manager can disable video per member such that the
+  member cannot re enable it. Managed by someone you trust, that is real
+  enforcement with no resolver at all. Verify it holds on your account before
+  relying on it.
+* **Self hosted.** AdGuard Home on a machine you control, rules in
+  `||domain^` form from `nextdns-denylist.txt`, DoH with a valid certificate,
+  and the DNS profile pointed at it. No third party, fails closed. The machine
+  and its admin credentials are yours to keep alive and to escrow.
+* **Hosted (NextDNS or ControlD).** Least effort. Paste
+  `nextdns-denylist.txt` into the denylist, enable Block Bypass Methods, put
+  the config ID into the DNS profile. **Pay for it**: free tiers stop
+  filtering past a monthly quota and fail open. The dashboard login is a
+  remote off switch, so escrow it too.
 
-   ```
-   adb shell dpm set-device-owner dev.clarity/.ClarityAdminReceiver
-   ```
+The pin applies to every interface, cellular and any wifi, and cannot be
+disabled on the phone (`ProhibitDisablement`). Exact per flow filtering with
+no server exists only as code: an `NEFilterDataProvider` extension, which
+needs a paid Apple developer account and Xcode at build time (a cloud Mac
+rented by the hour suffices; the built app installs via iMazing).
 
-4. Open Clarity. It enforces immediately and starts the filtering VPN.
-5. Now sign into the Google account you want to use (and want FRP bound to),
-   then install/allow only the apps you whitelisted. Reopen Clarity and tap
-   **Enforce now** so the new apps get sorted.
-6. This is now a commitment build: the manifest has no `android:testOnly`, so
-   device owner cannot be removed over adb. Build it in **release** mode as well
-   (so `BuildConfig.DEBUG` is false and no lift button is compiled in), install
-   that, and set device owner on a fresh reset. From then on adb is off and
-   there is no software off switch; the only way out is a wipe from a computer.
+## Getting out: wipe from a computer, lose everything
 
-   Because there is no `testOnly` escape, do your testing with a debug build
-   first and confirm the whitelist and behavior before committing a phone to the
-   release build.
+The Settings erase is disabled. What remains:
 
-## Tuning
+| Wipe path | Gated by |
+| --- | --- |
+| Security Lockout erase (fail the passcode repeatedly) | demands the Apple ID password before erasing |
+| Recovery/DFU restore | needs a computer and a cable; Activation Lock demands the Apple ID afterward |
+| iCloud remote erase | demands the Apple ID password, from another device |
 
-* **Allowed apps:** your personal allow list lives in
-  `app/src/main/assets/whitelist.txt` (one package per line), which is
-  **gitignored** so your real apps never get committed. Copy
-  `whitelist.example.txt` to `whitelist.txt`, or, better, generate it from your
-  device so the package names are exact:
+Every path destroys everything on the phone. The restrictions profile
+disables iCloud Backup precisely so that stays true; a wipe then genuinely
+costs every photo, message and login, which is the deterrent. Delete the
+`allowCloudBackup` key from your `.local` copy if you would rather have
+breakage insurance and a softer wall. Note that recovery mode on an iPhone
+cannot wipe the device by itself; it only lets an attached computer restore
+it, so with the Apple ID escrowed there is no phone-only way out at all.
 
-  ```
-  adb shell pm list packages -3 | sed "s/package://" > app/src/main/assets/whitelist.txt
-  ```
+## Honest limits
 
-  Then delete any lines you do not want allowed. `KIOSK_ESSENTIALS` (utility
-  system apps on the grid) and `SYSTEM_ESSENTIALS` (kept installed) stay in
-  `Whitelist.kt`, since they are generic OS packages, not personal.
-* **Connectivity: cellular only, no wifi.** WiFi is blocked outright
-  (`DISALLOW_CONFIG_WIFI`, `DISALLOW_CHANGE_WIFI_STATE`,
-  `DISALLOW_ADD_WIFI_CONFIG`): it cannot be turned on or configured on the
-  device, so the phone runs on the SIM. Turn wifi off before you lock down, and
-  the restrictions keep it off. The always on filtering VPN runs over cellular.
-* **Managing Bluetooth and the SIM on device.** The Clarity app (its icon is on
-  the home grid) has a **Bluetooth** toggle and a **Mobile data & SIM** button.
-  Bluetooth toggles directly (a device owner is exempt from the Android 13 rule
-  that stops apps toggling it). The SIM button opens the system mobile data /
-  internet panel; to allow that, `com.android.settings` is permitted to RUN in
-  lock task but is kept OFF the launcher grid, so there is no Settings icon to
-  browse, only the targeted mobile control. Every dangerous Settings action
-  (factory reset, developer options, adding a user, VPN config, date/time) stays
-  blocked by the hardening restrictions, and the wifi controls there are
-  neutered. Clarity also makes a best effort to keep mobile data on; there is no
-  guaranteed device owner API for the master data switch, but you can now turn it
-  back on yourself from the SIM button if it ever gets switched off. Set
-  `FORCE_DATA_ROAMING` in `PolicyEnforcer.kt` to force roaming on if you travel.
-* **Video hosts:** enable logcat and watch tag `ClarityDNS` to see exactly what
-  Spotify (or anything) resolves on your device, then move video hosts into
-  `DomainRules.BLOCKED_SUFFIXES`. Audio hosts left out of that set keep working.
+* **DNS filtering (if used) is hostname level** and dodgeable by an app with
+  a hardcoded resolver IP. The web filter and the whitelist do not have this
+  hole; only the video-inside-allowed-apps case rides on DNS.
+* **Web views render pages unless the web filter profile is installed.** With
+  it, the hole closes at the cost of maintaining a login domain allowlist.
+  Captive portal pages (hotel wifi) are also WebKit and need their domains
+  allowed if you use such networks.
+* **The notification shade, Control Center and app switcher stay.** There is
+  no multi app kiosk on iOS. With everything dangerous hidden or disabled
+  there is nothing actionable in them.
+* **Settings cannot be hidden**, only defanged: erase, account changes, VPN
+  and profile installs are closed; wifi, cellular and Bluetooth remain
+  available.
+* **Wifi cannot be forced off** by any profile key. The DNS pin follows the
+  phone onto every network, so wifi is not a filter bypass.
+* **A paired Apple Watch may not enforce the app allowlist** (reported on
+  Apple's developer forums). Test or do not pair one.
+* **`allowAssistant` (Siri) is deprecated as of iOS 26.4**, still honored, no
+  replacement key yet. Revisit if a future OS drops it.
+* **Emergency dialing cannot be removed**, for legal and safety reasons.
+* **Recovery/bootloader level attacks** are outside any profile's control;
+  Activation Lock is the deterrent, not a guarantee.
 
-## Honest limits (what "airtight" cannot mean on an unrooted phone)
+## Files
 
-* **Content level video/mp4 blocking is impossible without root.** Spotify and
-  others use pinned TLS, so their traffic cannot be decrypted to strip video
-  while keeping audio. We block by **hostname** via DNS, which works because
-  video and audio use different hosts, but if a service ever serves both from
-  one pinned host, domain filtering cannot separate them. The `ClarityDNS` log is
-  there so you can adapt when hosts change.
-* **DNS filtering can be dodged by hardcoded resolver IPs or DoH.** We mitigate
-  by forcing Private DNS off and blocking known DoH endpoints, not by claiming
-  it is unbeatable.
-* **Whitelisted apps can still show web pages in their own WebViews** (needed
-  for auth). This is now the single biggest remaining kiosk escape: a link
-  tapped inside an allowed app can render web content in that app. It has no
-  address bar and no general browsing UI, and the kiosk blocks jumping to any
-  other app, but the page still loads. The only real defense is keeping the
-  whitelist tight and avoiding link heavy or web heavy apps. Everything else
-  (recents, the shade, Settings deep links, Voice Access, swapped keyboards,
-  the lock screen camera) is now closed.
-* **Emergency dialing cannot be removed**, for legal and safety reasons, so the
-  emergency dialer remains reachable from the lock screen. It cannot launch your
-  apps, but it is a surface that exists on every phone.
-* **Recovery/bootloader level attacks** (custom firmware, JTAG) are outside any
-  app's control; FRP is the deterrent, not a guarantee against a well funded
-  attacker.
-
-## Project layout
-
-* `PolicyEnforcer.kt` core: whitelist hiding, hardening restrictions, uninstall
-  block, always on VPN, FRP, link routing, kiosk / lock task.
-* `LauncherActivity.kt` the home screen: grid of allowed apps, enters lock task.
-* `Whitelist.kt` the apps you allow, plus system essentials.
-* `DomainRules.kt` blocked video and DoH host suffixes.
-* `FilterVpnService.kt` the DNS filtering VPN.
-* `ClarityAdminReceiver.kt` / `BootReceiver.kt` / `EnforcementJob.kt` keep policy
-  applied at activation, after reboot, and every 15 minutes.
-* `DeadEndActivity.kt` where link taps land. `MainActivity.kt` status panel.
+* `clarity-restrictions.mobileconfig` app whitelist plus hardening (template,
+  example apps only).
+* `clarity-webfilter.mobileconfig` allowlist only web filter for every WebKit
+  view (template).
+* `clarity-dns.mobileconfig` pins all DNS to a filtering resolver (template,
+  optional).
+* `nextdns-denylist.txt` video and DoH host list for the resolver.
+* `*.local.mobileconfig` your filled in copies, gitignored, never committed.

@@ -1,0 +1,59 @@
+# Clarity denylist: video and streaming delivery hosts, plus DoH resolvers.
+#
+# For NextDNS: paste the domains under Denylist (one per line, without the
+# comments) and enable "Block Bypass Methods" under Privacy/Settings, which
+# blocks DoH resolvers, proxies and VPN discovery wholesale. NextDNS blocks
+# each domain AND all subdomains. The Logs tab shows what an app resolves
+# on the real phone; tune the list from there.
+#
+# For AdGuard Home: same domains as custom rules in the form ||domain^
+#
+# Blocking works at the granularity of "which server", never "which file",
+# because traffic is encrypted. That is enough to cut video CDNs while
+# leaving audio CDNs alone, since they are usually separate hosts. If a
+# service ever serves both from one host, domain filtering cannot separate
+# them.
+
+# Spotify video: canvas loops and video podcasts/clips.
+# Audio hosts (audio*.scdn.co and friends) are NOT listed, music plays.
+canvaz.scdn.co
+canvaz-cdn.scdn.co
+video-fa.scdn.co
+video-akpcw-cdn-spotify-com.akamaized.net
+spotifycdn.net
+
+# YouTube video delivery (search/app still work, playback stream dies)
+googlevideo.com
+youtubei.googleapis.com
+yt3.ggpht.com
+
+# Generic short form / social video CDNs
+tiktokcdn.com
+tiktokv.com
+muscdn.com
+fbcdn.net
+cdninstagram.com
+video.twimg.com
+v.redd.it
+
+# Big streaming services
+nflxvideo.net
+aiv-cdn.net
+media-amazon.com
+dssedge.com
+hulustream.com
+ttvnw.net
+
+# DoH resolvers. Mostly redundant once Block Bypass Methods is on, kept
+# for belt and braces. NOTE: dns.nextdns.io is deliberately absent; if
+# NextDNS is your resolver, blocking it would cut the phone off from its
+# own filter.
+dns.google
+cloudflare-dns.com
+mozilla.cloudflare-dns.com
+one.one.one.one
+dns.quad9.net
+doh.opendns.com
+dns.adguard.com
+doh.cleanbrowsing.org
+chrome.cloudflare-dns.com

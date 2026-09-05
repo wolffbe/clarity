@@ -1,24 +1,6 @@
-# Gradle
-.gradle/
-build/
-app/build/
-
-# Local configuration
-local.properties
-
-# IDE
-.idea/
-*.iml
-.vscode/
-
-# Keystores and signing
-*.jks
-*.keystore
+# Personal filled in profiles (private; the templates are tracked)
+*.local.mobileconfig
 
 # OS / misc
 .DS_Store
 *.log
-captures/
-
-# Personal app whitelist (private; the example template is tracked)
-app/src/main/assets/whitelist.txt

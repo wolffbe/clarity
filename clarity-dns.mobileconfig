@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Clarity: DNS filter profile (TEMPLATE, OPTIONAL).
+
+  Pins every DNS lookup, on cellular and any wifi, to one filtering DoH
+  resolver that refuses to resolve video and streaming hosts while leaving
+  audio hosts alone (list: nextdns-denylist.txt). Only install this if you
+  want video blocked inside whitelisted apps; everything else in Clarity
+  works without it. See "The DNS layer is optional" in README.md.
+
+  BEFORE INSTALLING: copy to clarity-dns.local.mobileconfig and replace
+  YOURID with your NextDNS config ID, or point ServerURL at your own
+  AdGuard Home DoH endpoint. The /clarity-iphone suffix just names the
+  device in NextDNS logs; the logs are how you discover which hosts an app
+  resolves so you can tune the denylist.
+
+  ProhibitDisablement needs supervision and stops the resolver being
+  turned off in Settings. PayloadRemovalDisallowed stops the profile being
+  removed on the phone; only the supervision host over USB can lift it.
+-->
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>DNSSettings</key>
+			<dict>
+				<key>DNSProtocol</key>
+				<string>HTTPS</string>
+				<key>ServerURL</key>
+				<string>https://dns.nextdns.io/YOURID/clarity-iphone</string>
+			</dict>
+			<key>ProhibitDisablement</key>
+			<true/>
+			<key>PayloadDescription</key>
+			<string>Pins all DNS resolution to the Clarity filtering resolver.</string>
+			<key>PayloadDisplayName</key>
+			<string>Clarity DNS Filter</string>
+			<key>PayloadIdentifier</key>
+			<string>dev.clarity.ios.dns.payload</string>
+			<key>PayloadType</key>
+			<string>com.apple.dnsSettings.managed</string>
+			<key>PayloadUUID</key>
+			<string>F15C1FAA-0BE2-4856-A580-431B9F95D0A2</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Blocks video and streaming hosts at the DNS level while leaving audio hosts alone. Cannot be disabled on the phone.</string>
+	<key>PayloadDisplayName</key>
+	<string>Clarity DNS Filter</string>
+	<key>PayloadIdentifier</key>
+	<string>dev.clarity.ios.dns</string>
+	<key>PayloadOrganization</key>
+	<string>Clarity</string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>C886CF5B-FE36-40D0-8C25-8619E3719836</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
