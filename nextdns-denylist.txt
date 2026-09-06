@@ -16,11 +16,38 @@
 
 # Spotify video: canvas loops and video podcasts/clips.
 # Audio hosts (audio*.scdn.co and friends) are NOT listed, music plays.
+# Never block scdn.co or spotifycdn.com wholesale, audio rides there too.
 canvaz.scdn.co
 canvaz-cdn.scdn.co
 video-fa.scdn.co
+video-akpcw.spotifycdn.com
 video-akpcw-cdn-spotify-com.akamaized.net
+podz-content.spotifycdn.com
+# Generic looking load balancer; if audio or the app breaks in testing,
+# remove this line first.
+default.cdn-gslb.spotify.com
 spotifycdn.net
+
+# Spotify artwork: covers, playlist and generated art, profile pictures.
+# Blocked on purpose (text and audio only UI). NOT blocked: misc.scdn.co,
+# misc.spotifycdn.com, fex.spotifycdn.com, heads-fa-tls13.spotifycdn.com,
+# concerts.spotifycdn.com, since those look functional rather than art;
+# add them if imagery still leaks through.
+i.scdn.co
+p.scdn.co
+image-cdn-fa.spotifycdn.com
+image-cdn-ak.spotifycdn.com
+seed-mix-image.spotifycdn.com
+seeded-session-images.scdn.co
+newjams-images.scdn.co
+lineup-images.scdn.co
+dailymix-images.scdn.co
+thisis-images.spotifycdn.com
+wrapped-images.spotifycdn.com
+daylist.spotifycdn.com
+pickasso.spotifycdn.com
+merch-img.scdn.co
+lexicon-assets.spotifycdn.com
 
 # YouTube video delivery (search/app still work, playback stream dies)
 googlevideo.com
