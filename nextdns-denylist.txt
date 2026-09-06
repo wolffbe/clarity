@@ -20,9 +20,15 @@
 canvaz.scdn.co
 canvaz-cdn.scdn.co
 video-fa.scdn.co
+video-ak.scdn.co
+video-cf.scdn.co
+video-fa.spotifycdn.com
+video-ak.spotifycdn.com
+video-cf.spotifycdn.com
 video-akpcw.spotifycdn.com
 video-akpcw-cdn-spotify-com.akamaized.net
 podz-content.spotifycdn.com
+seekpanels.spotifycdn.com
 # Generic looking load balancer; if audio or the app breaks in testing,
 # remove this line first.
 default.cdn-gslb.spotify.com
