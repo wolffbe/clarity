@@ -1,170 +1,139 @@
 # Clarity
 
 Turns a stock iPhone into a locked down, distraction free device using
-**supervision**, the OS level management role that corporate device management
-uses. It runs a strict **whitelist**: only the apps you name stay visible,
-everything else disappears, there is no browser, and it is built to be
-genuinely hard to undo, not merely inconvenient.
+**supervision**, the same OS role corporate device management uses. Strict
+whitelist: only the apps you name exist, there is no browser, and undoing it
+is meant to be genuinely hard, not merely inconvenient.
 
-There is no code and no server. Clarity is three configuration profiles
-installed over USB from a PC running [iMazing](https://imazing.com/supervision)
-(Windows or Mac), enforced on the phone by the OS itself. Everything works in
-airplane mode; nothing phones home.
+Clarity is three configuration profiles installed over
+USB with [iMazing](https://imazing.com/supervision) (Windows or Mac),
+enforced by the OS itself.
 
 ## What it enforces
 
-**Whitelist, not blocklist.** Only apps listed in the restrictions profile are
-shown or launchable. Safari, the App Store, Shortcuts, and every unlisted app
-disappear. Whitelisted apps keep full internet access, so their in app login
-and OAuth web views work normally. Tapped `http`/`https` links have nowhere to
-go and die quietly.
-
-**Web content allowlist (optional but recommended).** The web filter profile
-uses the OS built in WebKit filter in allowlist only mode: every web page
-rendered anywhere on the device, including inside whitelisted apps' web views,
-is refused unless its domain is listed. Only login domains for OAuth need
-allowing. This closes the classic kiosk escape of browsing inside an allowed
-app.
-
-**No on-phone off switch.** The profiles are marked non removable. Nothing on
-the device relaxes anything. The only ways out are listed under "Getting out",
-and every one of them destroys all data on the phone.
-
-**Hardening** (all supervised restriction keys, enforced by the OS):
+* **Whitelist.** Only listed apps are visible or launchable. Safari, App
+  Store, Shortcuts and everything unlisted vanish.
+* **Web allowlist** (recommended). The OS built in WebKit filter refuses
+  every web page on the device, in app views included, except listed login
+  domains. Closes the classic in app browsing escape.
+* **No off switch on the phone.** The profiles are non removable. Every
+  exit wipes the phone.
 
 | Escape route | Closed by |
 | --- | --- |
-| Remove the profiles in Settings | `PayloadRemovalDisallowed`; only the supervision host over USB can lift them |
+| Remove the profiles in Settings | `PayloadRemovalDisallowed`; only the supervision host can lift them |
 | Erase from Settings | `allowEraseContentAndSettings` |
-| Pair with another computer | `allowHostPairing`: the phone only pairs with the supervision host |
-| Install anything | `allowAppInstallation`, `allowUIAppInstallation`, `allowAutomaticAppDownloads`, `allowAppClips`, `allowEnterpriseAppTrust` |
+| Pair with another computer | `allowHostPairing` |
+| Install anything | store hidden and unlaunchable via the allowlist; `allowAutomaticAppDownloads`, `allowAppClips`, `allowEnterpriseAppTrust` |
 | Remove or offload apps | `allowAppRemoval` |
-| Sign out of the Apple ID (disarms Activation Lock) | `allowAccountModification` |
-| Add a VPN to dodge filtering | `allowVPNCreation` |
+| Sign out of the Apple ID | `allowAccountModification` (keeps Activation Lock armed) |
+| Add a VPN | `allowVPNCreation` |
 | Install rival profiles on device | `allowUIConfigurationProfileInstallation` |
-| Talk or search your way to content (Siri, Spotlight web results) | `allowAssistant`, `allowSpotlightInternetResults` |
+| Siri and Spotlight web results | `allowAssistant`, `allowSpotlightInternetResults` |
 | Clock fiddling | `forceAutomaticDateAndTime` |
-| Soften the wipe deterrent via iCloud Backup | `allowCloudBackup` (see "Getting out") |
+| Cheap wipes via restore | `allowCloudBackup` off, see "Getting out" |
 
 ## What you need
 
-* A PC with iMazing (supervision needs a paid license, one time) and a USB
-  cable.
+* A PC with iMazing (paid license) and a USB cable.
 * An iPhone you can erase.
-* Optionally, a filtering DNS resolver (see "The DNS layer is optional").
+* Optional: a filtering DNS resolver (below).
 
 ## Setup
 
-1. **Fill in your profiles.** Copy `clarity-restrictions.mobileconfig` to
-   `clarity-restrictions.local.mobileconfig` and put your real apps in the
-   allowlist (bundle IDs show in iMazing's Apps view, or search
-   `itunes.apple.com/search?term=NAME&entity=software`). The `*.local.*`
-   copies are gitignored, so your personal app list never gets committed. If
-   you use the DNS layer, copy and fill `clarity-dns.mobileconfig` the same
-   way.
-2. **Erase and supervise.** Factory reset the iPhone. Run iMazing's
-   Supervision wizard on the fresh device. iMazing generates a supervision
-   identity certificate; keep it for now, it is your only future write access.
-3. **Sign in and install.** Set up the phone, sign into the Apple ID, turn on
-   Find My (this arms Activation Lock), install every whitelisted app from the
-   App Store and log into each one while the store still exists.
-4. **Install the profiles** over USB from iMazing: restrictions, web filter,
-   and optionally DNS. They install silently on a supervised phone. The moment
-   the restrictions land, the App Store, Safari and every unlisted app vanish.
-5. **Live on it while you still hold the key.** The profiles cannot be removed
-   on the phone, but this PC can still lift them over USB. Tune the app list
-   and the web filter's login domains until the phone is right.
-6. **Commit.** Two credentials decide how hard the wall is:
-   * **Supervision identity.** Delete it from iMazing's library and from any
-     PC backups, and no computer on earth can pair with the phone or touch the
-     profiles again. Or export it to a USB stick held by someone you trust,
-     which is a lift path that does not cost your data.
-   * **Apple ID password.** Held by you, every wipe path stays open to you and
-     Activation Lock is mere anti theft. Held or co held by someone else, the
-     phone has zero phone-only wipe paths and even a wiped phone stays a brick
-     until they consent.
+1. Copy the templates to `*.local.mobileconfig` (gitignored) and fill in
+   your apps (bundle IDs via iMazing or the iTunes search API) and resolver
+   ID. iMazing Profile Editor (free) validates the files before install.
+2. Factory reset, then supervise with iMazing. In the wizard: UNCHECK
+   "Allow pairing without supervising organization", UNCHECK "Disable USB
+   restricted mode", CHECK "Allow activation lock while supervised" (or
+   Find My can never arm), leave "Save passcode unlock token" off. Skip MDM
+   enrollment, none is used.
+3. Set up the phone. Coming from Android, run Move to iOS here, WhatsApp
+   history transfers only during setup. Sign into the Apple ID, enable Find
+   My, set a passcode.
+4. Install and sign into every whitelisted app. TAN apps need their
+   activation letters now. Enable iCloud Photos if wanted.
+5. Install the profiles. DNS and web filter anytime; restrictions strictly
+   last, the store dies with it. Then turn on Settings, App Store, App
+   Updates once.
+6. Export the supervision identity (iMazing Preferences, Supervision) as a
+   password protected .p12 to a USB stick kept off any cloud. The identity
+   is the key, not the PC; lose both and the phone is frozen forever.
 
-## The DNS layer is optional
+## Operating the phone
 
-Only one behavior needs it: blocking native video inside whitelisted apps
-while keeping their audio (for example streaming apps whose music you want but
-whose video you do not). Everything else is enforced on the phone with no
-external moving parts. Three postures:
+* **Add an app:** remove the restrictions profile in iMazing, install and
+  sign in, reinstall the profile. Two minutes, requires the identity.
+* **Updates: automatic.** With the store hidden by the allowlist and
+  `allowAppInstallation` left unset, background auto updates run (verified).
+  Manual installs stay impossible.
+* **Rule changes:** edit a profile, reinstall over USB, effective
+  immediately. DNS rules change in the dashboard, no cable.
+* **Pre block media:** in app cache clearing is not enough, Spotify keeps
+  showing pre block video until the app is reinstalled with the DNS block
+  in place (the add an app round trip above).
 
-* **None.** Skip the DNS profile. Native video inside whitelisted apps plays;
-  everything else still holds. For Spotify specifically, video can instead be
-  disabled at the account level: the Content and display settings carry
-  toggles for canvas, music videos and all video content (rolling out), and on
-  a family plan the plan manager can disable video per member such that the
-  member cannot re enable it. Managed by someone you trust, that is real
-  enforcement with no resolver at all. Verify it holds on your account before
-  relying on it.
-* **Self hosted.** AdGuard Home on a machine you control, rules in
-  `||domain^` form from `nextdns-denylist.txt`, DoH with a valid certificate,
-  and the DNS profile pointed at it. No third party, fails closed. The machine
-  and its admin credentials are yours to keep alive and to escrow.
-* **Hosted (NextDNS or ControlD).** Least effort. Paste
-  `nextdns-denylist.txt` into the denylist, enable Block Bypass Methods, put
-  the config ID into the DNS profile. **Pay for it**: free tiers stop
-  filtering past a monthly quota and fail open. The dashboard login is a
-  remote off switch, so escrow it too.
+## The DNS layer (optional)
 
-The pin applies to every interface, cellular and any wifi, and cannot be
-disabled on the phone (`ProhibitDisablement`). Exact per flow filtering with
-no server exists only as code: an `NEFilterDataProvider` extension, which
-needs a paid Apple developer account and Xcode at build time (a cloud Mac
-rented by the hour suffices; the built app installs via iMazing).
+One feature rides on it: blocking native video inside whitelisted apps
+while audio keeps playing. Postures:
 
-## Getting out: wipe from a computer, lose everything
+* **None.** Spotify canvas and video podcasts play. Alternative: Spotify's
+  own video toggles, and on a family plan the manager can disable video per
+  member, unre-enableable by the member.
+* **Self hosted.** AdGuard Home, same rules as `||domain^`. No third
+  party, fails closed, your server to run.
+* **Hosted** (NextDNS, ControlD). Easiest. **Pay**: free tiers stop
+  filtering at their quota and fail open. Enable Block Bypass Methods.
 
-The Settings erase is disabled. What remains:
+Hostname filtering only splits what uses distinct hosts. Spotify does:
+video, canvas and even artwork die (the denylist strips covers on purpose,
+a text and audio UI) while audio resolves. WhatsApp does not: Status shares
+hosts with chat media, so blocking one kills both; mute per contact
+instead. The device label in the DoH URL self registers and tags the phone
+in the resolver logs. Verify from any PC: query the DoH endpoint, blocked
+hosts answer 0.0.0.0. Spotify hosts per
+[Tech Lockdown's writeup](https://www.techlockdown.com/articles/block-images-videos-spotify).
+
+Exact per flow filtering without any server exists only as code:
+`NEFilterDataProvider`, paid developer account, Mac at build time.
+
+## Getting out
 
 | Wipe path | Gated by |
 | --- | --- |
-| Security Lockout erase (fail the passcode repeatedly) | demands the Apple ID password before erasing |
-| Recovery/DFU restore | needs a computer and a cable; Activation Lock demands the Apple ID afterward |
-| iCloud remote erase | demands the Apple ID password, from another device |
+| Security Lockout erase (repeated wrong passcode) | the Apple ID password |
+| Recovery/DFU restore | a computer and a cable; Activation Lock after |
+| iCloud remote erase | the Apple ID password |
 
-Every path destroys everything on the phone. The restrictions profile
-disables iCloud Backup precisely so that stays true; a wipe then genuinely
-costs every photo, message and login, which is the deterrent. Delete the
-`allowCloudBackup` key from your `.local` copy if you would rather have
-breakage insurance and a softer wall. Note that recovery mode on an iPhone
-cannot wipe the device by itself; it only lets an attached computer restore
-it, so with the Apple ID escrowed there is no phone-only way out at all.
+All paths erase the phone; iCloud Backup is disabled so that stays
+expensive (delete `allowCloudBackup` from your copy for a softer wall).
+Recovery mode cannot wipe phone only, it needs a computer.
+
+Survives a wipe: iCloud Photos, contacts, calendars, WhatsApp up to its
+last chat backup, synced clouds. Dies: Signal history,
+every login, all local app data (keep KeePassium and Obsidian vaults
+synced), the eSIM, and every TAN binding, meaning days of letters before
+mobile banking returns.
 
 ## Honest limits
 
-* **DNS filtering (if used) is hostname level** and dodgeable by an app with
-  a hardcoded resolver IP. The web filter and the whitelist do not have this
-  hole; only the video-inside-allowed-apps case rides on DNS.
-* **Web views render pages unless the web filter profile is installed.** With
-  it, the hole closes at the cost of maintaining a login domain allowlist.
-  Captive portal pages (hotel wifi) are also WebKit and need their domains
-  allowed if you use such networks.
-* **The notification shade, Control Center and app switcher stay.** There is
-  no multi app kiosk on iOS. With everything dangerous hidden or disabled
-  there is nothing actionable in them.
-* **Settings cannot be hidden**, only defanged: erase, account changes, VPN
-  and profile installs are closed; wifi, cellular and Bluetooth remain
-  available.
-* **Wifi cannot be forced off** by any profile key. The DNS pin follows the
-  phone onto every network, so wifi is not a filter bypass.
-* **A paired Apple Watch may not enforce the app allowlist** (reported on
-  Apple's developer forums). Test or do not pair one.
-* **`allowAssistant` (Siri) is deprecated as of iOS 26.4**, still honored, no
-  replacement key yet. Revisit if a future OS drops it.
-* **Emergency dialing cannot be removed**, for legal and safety reasons.
-* **Recovery/bootloader level attacks** are outside any profile's control;
-  Activation Lock is the deterrent, not a guarantee.
+* DNS filtering is hostname level; a hardcoded resolver IP dodges it. Only
+  the video in allowed apps case depends on it.
+* Web views render pages unless the web filter profile is installed.
+  Captive portals need their domains added, and remote images in HTML mail
+  render as placeholders (they load from unlisted hosts).
+* Notification shade, Control Center and app switcher stay; nothing
+  dangerous is reachable in them.
+* Settings cannot be hidden, only defanged.
+* Wifi cannot be forced off; the DNS pin follows every network anyway.
+* A paired Apple Watch may not enforce the allowlist (forum reports).
 
 ## Files
 
-* `clarity-restrictions.mobileconfig` app whitelist plus hardening (template,
-  example apps only).
-* `clarity-webfilter.mobileconfig` allowlist only web filter for every WebKit
-  view (template).
-* `clarity-dns.mobileconfig` pins all DNS to a filtering resolver (template,
-  optional).
-* `nextdns-denylist.txt` video and DoH host list for the resolver.
-* `*.local.mobileconfig` your filled in copies, gitignored, never committed.
+* `clarity-restrictions.mobileconfig` whitelist plus hardening (template).
+* `clarity-webfilter.mobileconfig` allowlist only web filter (template).
+* `clarity-dns.mobileconfig` DNS pin to the resolver (template, optional).
+* `nextdns-denylist.txt` video, artwork and DoH host list.
+* `*.local.mobileconfig` your filled in copies, gitignored.

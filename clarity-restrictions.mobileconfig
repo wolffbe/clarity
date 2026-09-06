@@ -65,14 +65,16 @@
 			<key>allowEraseContentAndSettings</key>
 			<false/>
 
-			<!-- Hides the App Store and blocks every install path:
-			     store, automatic downloads from other devices, App Clips
-			     launched from links or QR codes, and trusting sideloaded
-			     enterprise apps. -->
-			<key>allowAppInstallation</key>
-			<false/>
-			<key>allowUIAppInstallation</key>
-			<false/>
+			<!-- The App Store is hidden by the allowlist, so there is no
+			     UI to browse or install anything. allowAppInstallation is
+			     deliberately NOT set: installs stay allowed as policy so
+			     iOS background auto updates keep the installed apps
+			     current (verified working; the store app itself cannot be
+			     launched, not even via rate-this-app links). Set it to
+			     false if you prefer fully frozen apps over updates.
+			     Blocked regardless: automatic downloads from other
+			     devices, App Clips from links or QR codes, and trusting
+			     sideloaded enterprise apps. -->
 			<key>allowAutomaticAppDownloads</key>
 			<false/>
 			<key>allowAppClips</key>
